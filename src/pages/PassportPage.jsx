@@ -12,11 +12,11 @@ export default function PassportPage() {
     const fetchStamps = async () => {
       try {
         const token = localStorage.getItem("token");
-        //console.log("Token encontrado:", token);
+        console.log("Token encontrado:", token);
         
         // Si no hay token, redirigir inmediatamente
         if (!token) {
-          //console.log("No hay token, redirigiendo al login");
+          console.log("No hay token, redirigiendo al login");
           navigate("/");
           return;
         }

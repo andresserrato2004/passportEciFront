@@ -20,7 +20,7 @@ export default function LoginPage() {
       console.log("Login exitoso, redirigiendo al passport");
       
       // Usar window.location.replace para evitar problemas de navegación
-      window.location.replace("/passport");
+      navigate("/passport");
     } catch (err) {
       alert("Login failed: " + err.response?.data?.message || err.message);
     }
