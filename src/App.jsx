@@ -12,11 +12,29 @@ function App() {
     const storedToken = localStorage.getItem("token");
     setToken(storedToken);
     setIsLoading(false);
+
+    // Escuchar cambios en localStorage
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem("token");
+      setToken(newToken);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // También escuchar eventos personalizados para cambios en la misma pestaña
+    window.addEventListener('tokenChanged', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('tokenChanged', handleStorageChange);
+    };
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
+    // Disparar evento personalizado
+    window.dispatchEvent(new Event('tokenChanged'));
   };
 
   // Mostrar loading mientras verificamos el token

@@ -19,8 +19,14 @@ export default function LoginPage() {
       localStorage.setItem("token", response.data.token);
       console.log("Login exitoso, redirigiendo al passport");
       
-      // Usar window.location.replace para evitar problemas de navegación
-      window.location.replace("/passport");
+      // Disparar evento para que App.jsx detecte el cambio
+      window.dispatchEvent(new Event('tokenChanged'));
+      
+      // Usar navigate después de disparar el evento
+      setTimeout(() => {
+        navigate("/passport");
+      }, 50);
+      
     } catch (err) {
       alert("Login failed: " + err.response?.data?.message || err.message);
     }
