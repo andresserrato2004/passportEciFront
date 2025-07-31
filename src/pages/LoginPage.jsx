@@ -17,22 +17,37 @@ export default function LoginPage() {
         password,
       });
       localStorage.setItem("token", response.data.token);
-      navigate("/passport");
+      console.log("Login exitoso, redirigiendo al passport");
+      
+      // Usar window.location.replace para evitar problemas de navegación
+      window.location.replace("/passport");
     } catch (err) {
       alert("Login failed: " + err.response?.data?.message || err.message);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: `url('https://yt3.googleusercontent.com/-ySlVFY5JqTqV72pNodGR1k7vOIaWH5Usa4-nTd0QN-FmAqjJqQSJlauEYGhrpK9cxTLqLm5Vw=s900-c-k-c0x00ffffff-no-rj')`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
+        backgroundSize: '900px 900px',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Overlay para mejorar la legibilidad */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 to-indigo-100/80"></div>
+      
+      <div className="max-w-md w-full relative z-10">
         {/* Logo/Header */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-white text-3xl">🎓</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Pasaporte ECI</h1>
-          <p className="text-gray-600">Bienvenido de vuelta</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Pasaporte Escuela</h1>
+          <p className="text-gray-600">Bienvenido Estudiante</p>
         </div>
 
         {/* Formulario */}
@@ -65,7 +80,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Ingresa tu contraseña"
+                    placeholder="Ingrese su número de carnet"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 pl-12 pr-12"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -101,7 +116,7 @@ export default function LoginPage() {
           {/* Footer del formulario */}
           <div className="bg-gray-50 px-8 py-4">
             <p className="text-center text-sm text-gray-600">
-              🏫 Escuela Colombiana de Ingeniería
+              🏫 Universidad Escuela Colombiana de Ingeniería Julio Garavito
             </p>
           </div>
         </div>

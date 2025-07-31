@@ -8,15 +8,21 @@ export default function ScanPage() {
   const videoRef = useRef(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [qrScannerInstance, setQrScannerInstance] = useState(null);
+  const [availableCameras, setAvailableCameras] = useState([]);
+  const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
 
   useEffect(() => {
     let qrScanner = null;
+    let isDestroyed = false;
 
     const startCamera = async () => {
       try {
         setError(null);
         
-        if (videoRef.current) {
+        if (videoRef.current && !isDestroyed) {
           qrScanner = new QrScanner(
             videoRef.current,
             result => {
@@ -28,26 +34,68 @@ export default function ScanPage() {
               highlightScanRegion: true,
               highlightCodeOutline: true,
               preferredCamera: 'environment', // Cámara trasera
+              // Configuración específica para iOS
+              maxScansPerSecond: 5,
+              // Forzar cámara trasera en iOS
+              facingMode: 'environment'
             }
           );
 
-          await qrScanner.start();
-          setIsScanning(true);
+          // Para dispositivos iOS, intentar forzar la cámara trasera
+          try {
+            const cameras = await QrScanner.listCameras(true);
+            console.log('Cámaras disponibles:', cameras);
+            
+            if (!isDestroyed) {
+              setAvailableCameras(cameras);
+              
+              // Buscar la cámara trasera
+              const backCamera = cameras.find(camera => 
+                camera.label.toLowerCase().includes('back') || 
+                camera.label.toLowerCase().includes('rear') ||
+                camera.label.toLowerCase().includes('environment') ||
+                camera.label.toLowerCase().includes('trasera')
+              );
+              
+              if (backCamera && !isDestroyed) {
+                console.log('Configurando cámara trasera:', backCamera.label);
+                const backCameraIndex = cameras.findIndex(cam => cam.id === backCamera.id);
+                setCurrentCameraIndex(backCameraIndex);
+                await qrScanner.setCamera(backCamera.id);
+              }
+            }
+          } catch (cameraError) {
+            console.log('No se pudieron listar las cámaras:', cameraError);
+          }
+
+          if (!isDestroyed && qrScanner) {
+            await qrScanner.start();
+            setIsScanning(true);
+            setQrScannerInstance(qrScanner);
+          }
         }
       } catch (err) {
         console.error('Error al acceder a la cámara:', err);
-        setError('No se pudo acceder a la cámara. Asegúrate de dar permisos.');
+        if (!isDestroyed) {
+          setError('No se pudo acceder a la cámara. Asegúrate de dar permisos.');
+        }
       }
     };
 
     startCamera();
 
     return () => {
+      isDestroyed = true;
       if (qrScanner) {
-        qrScanner.stop();
-        qrScanner.destroy();
+        try {
+          qrScanner.stop();
+          qrScanner.destroy();
+        } catch (e) {
+          console.log('Error al limpiar scanner:', e);
+        }
       }
       setIsScanning(false);
+      setQrScannerInstance(null);
     };
   }, []);
 
@@ -58,22 +106,106 @@ export default function ScanPage() {
     }
   };
 
+  const switchCamera = async () => {
+    if (availableCameras.length > 1 && qrScannerInstance) {
+      try {
+        const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
+        const nextCamera = availableCameras[nextIndex];
+        
+        console.log('Cambiando a cámara:', nextCamera.label);
+        
+        // Detener el scanner temporalmente
+        const wasScanning = isScanning;
+        if (wasScanning) {
+          await qrScannerInstance.stop();
+          setIsScanning(false);
+        }
+        
+        // Cambiar cámara
+        await qrScannerInstance.setCamera(nextCamera.id);
+        setCurrentCameraIndex(nextIndex);
+        
+        // Reiniciar el scanner
+        if (wasScanning) {
+          await qrScannerInstance.start();
+          setIsScanning(true);
+        }
+        
+      } catch (err) {
+        console.error('Error al cambiar cámara:', err);
+        setError('Error al cambiar de cámara. Recargando página...');
+        
+        // Si falla, recargar la página como último recurso
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
+    }
+  };
+
   const processQRCode = async (decodedText) => {
     try {
+      // Detener el scanner inmediatamente para evitar múltiples lecturas
+      if (qrScannerInstance) {
+        qrScannerInstance.stop();
+        setIsScanning(false);
+      }
+
       const token = localStorage.getItem("token");
-      await axios.post(
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/passport/visit`,
         { code: decodedText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      navigate("/passport");
+      
+      // Mostrar animación de éxito
+      setIsSuccess(true);
+      setSuccessMessage(`¡Lugar registrado correctamente! 🎉`);
+      
+      // Esperar 1 segundo antes de redirigir
+      setTimeout(() => {
+        navigate("/passport");
+      }, 1000);
+      
     } catch (err) {
+      console.error('Error procesando QR:', err);
+      
+      // Si hay error, reiniciar el scanner
+      if (qrScannerInstance) {
+        try {
+          await qrScannerInstance.start();
+          setIsScanning(true);
+        } catch (restartError) {
+          console.error('Error reiniciando scanner:', restartError);
+          setError('Error al procesar el código. Intenta de nuevo.');
+        }
+      }
+      
       alert("Error registrando lugar: " + err.response?.data?.message || err.message);
     }
   };
 
   return (
     <div className="h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+      {/* Overlay de éxito */}
+      {isSuccess && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 text-center transform animate-scaleIn max-w-sm mx-4">
+            <div className="text-6xl mb-4 animate-bounce">✅</div>
+            <h2 className="text-2xl font-bold text-green-600 mb-2">¡Éxito!</h2>
+            <p className="text-gray-700 mb-4">{successMessage}</p>
+            <div className="flex items-center justify-center text-sm text-gray-500 mb-4">
+              <span className="mr-2">🎪</span>
+              <span>Nueva estampilla agregada</span>
+            </div>
+            <p className="text-sm text-gray-400 mb-4">Redirigiendo al pasaporte...</p>
+            <div className="mt-4 w-32 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-progressBar"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white shadow-lg flex-shrink-0">
         <div className="max-w-4xl mx-auto px-4 py-3">
@@ -114,6 +246,16 @@ export default function ScanPage() {
                   <span className="w-1.5 h-1.5 bg-white rounded-full mr-1 animate-pulse"></span>
                   Activo
                 </span>
+              )}
+              {/* Botón de cambio de cámara */}
+              {availableCameras.length > 1 && (
+                <button
+                  onClick={switchCamera}
+                  className="ml-3 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-2 py-1 rounded-full text-4xs flex items-center transition-all duration-200"
+                >
+                  <span className="mr-1">🔄</span>
+                  <span>Cambiar cámara</span>
+                </button>
               )}
             </h3>
           </div>
