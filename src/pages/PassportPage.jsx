@@ -158,7 +158,7 @@ export default function PassportPage() {
                             <img 
                               src={place.imageUrl} 
                               alt={place.name}
-                              className="w-full h-full object-cover scale-125"
+                              className="w-full h-full object-cover"
                               onError={(e) => {
                                 e.target.style.display = 'none';
                               }}
