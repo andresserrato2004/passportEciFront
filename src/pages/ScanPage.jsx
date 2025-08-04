@@ -247,16 +247,6 @@ export default function ScanPage() {
                   Activo
                 </span>
               )}
-              {/* Botón de cambio de cámara */}
-              {availableCameras.length > 1 && (
-                <button
-                  onClick={switchCamera}
-                  className="ml-3 bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-2 py-1 rounded-full text-4xs flex items-center transition-all duration-200"
-                >
-                  <span className="mr-1">🔄</span>
-                  <span>Cambiar cámara</span>
-                </button>
-              )}
             </h3>
           </div>
           
