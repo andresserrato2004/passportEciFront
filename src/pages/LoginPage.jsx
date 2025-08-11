@@ -17,7 +17,7 @@ export default function LoginPage() {
     setErrorMessage(""); // Limpiar errores previos
     
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         email,
         password,
       });
@@ -148,7 +148,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Ingrese su número de carnet"
+                    placeholder="Ingrese su carnet"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 pl-12 pr-12"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

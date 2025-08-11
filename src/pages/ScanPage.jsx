@@ -153,7 +153,7 @@ export default function ScanPage() {
 
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/passport/visit`,
+        `${import.meta.env.VITE_API_URL}/api/passport/visit`,
         { code: decodedText },
         { headers: { Authorization: `Bearer ${token}` } }
       );

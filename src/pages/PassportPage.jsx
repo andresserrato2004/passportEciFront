@@ -21,7 +21,7 @@ export default function PassportPage() {
           return;
         }
         
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/passport/status`, {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/passport/status`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -34,7 +34,7 @@ export default function PassportPage() {
         //Econsole.log("Todos los lugares:", allPlacesData);
         //console.log("Lugares visitados:", visitedPlaces);
         
-        axios.get(`${import.meta.env.VITE_API_URL}/auth/profile`, { 
+        axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, { 
             headers:{ Authorization: `Bearer ${token}` }
         })
         .then(res => setUser(res.data))
